@@ -1,31 +1,27 @@
 import os
-
-import keras.utils as ku
 import numpy as np
 from flask import Flask, render_template, request
 from keras.models import load_model
-# df=pd.read_csv("prac")
+from keras.preprocessing import image
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
-# deserializing to read the file
 
 # Model saved with Keras model.save()
-MODEL_PATH = 'kidney_vgg19.h5'
+MODEL_PATH = 'kidney_densenet201_model.h5'
 
 # Load your trained model
 model = load_model(MODEL_PATH)
 
 
-def model_predict(img_path, model, preds=None):
-    img = ku.load_img(img_path, target_size=(256, 256))
+def model_predict(img_path, model):
+    img = image.load_img(img_path, target_size=(224, 224))
 
     # Preprocessing the image
-    x = ku.img_to_array(img)
-    img_test = np.expand_dims(x, axis=0)
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
 
-    classes = model.predict(img_test)
-
+    classes = model.predict(x)
     print(classes)
 
     values = classes[0]
@@ -36,11 +32,9 @@ def model_predict(img_path, model, preds=None):
     elif index1 == 1:
         preds = 'Stone'
     elif index1 == 2:
-        preds='Tumour'
+        preds = 'Tumour'
     return preds
 
-
-# model_predict('Dataset/validation/paper8.png', model)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -56,8 +50,7 @@ def upload():
 
         # Save the file to ./uploads
         basepath = os.path.dirname(__file__)
-        file_path = os.path.join(
-            basepath, 'Uploads', secure_filename(f.filename))
+        file_path = os.path.join(basepath, 'Uploads', secure_filename(f.filename))
         f.save(file_path)
 
         # Make prediction
